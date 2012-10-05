@@ -1,3 +1,5 @@
+au BufNewFile,BufRead *.xul  setf xul 
+
 if exists("did_load_filetypes")
   finish
 endif
