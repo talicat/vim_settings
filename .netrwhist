@@ -1,0 +1,8 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhist_cnt =6
+let g:netrw_dirhist_1='/home'
+let g:netrw_dirhist_2='/home/richw'
+let g:netrw_dirhist_3='/mnt/tva.usefuli.com/watson/data/cloud-config/data/www/staff-sites/jeffk/v-sandbox'
+let g:netrw_dirhist_4='/mnt/tva.usefuli.com/watson/data/fs/projects/rl-self-hosted/src/2.1d/inc.fabsuite.net_css/minified/css'
+let g:netrw_dirhist_5='/mnt/tva.usefuli.com/watson/data/fs/projects/rl-self-hosted/web-server-requirements'
+let g:netrw_dirhist_6='/data/fs-local/projects'
