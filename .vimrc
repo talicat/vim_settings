@@ -7,6 +7,30 @@
 " line numbers on 
 set nu
 
+" turn modelines on
+set modeline
+set modelines=5
+
+" http://www.e-reading.org.ua/htmbook.php/orelly/unix2.1/vi/ch11_10.htm
+" The nocp option turns off strict vi compatibility. The incsearch option
+" turns on incremental searching.
+" - also used for the align plugin: http://www.vim.org/scripts/script.php?script_id=294
+set nocp incsearch
+
+"Line and column highlighting
+"http://vim.wikia.com/wiki/Highlight_current_line
+" http://stackoverflow.com/questions/9869057/vim-linenr-and-cursorline-colour-configuration-change
+" options: http://www.sbf5.com/~cduan/technical/vi/vi-4.shtml
+" colors: http://choorucode.wordpress.com/2011/07/29/vim-chart-of-color-names/
+"         http://alvinalexander.com/linux/vi-vim-editor-color-scheme-syntax
+" src: http://code.metager.de/source/xref/vim/src/syntax.c
+"set cursorline
+"set cursorcolumn
+":hi CursorLine   cterm=NONE bg=darkred ctermfg=white guibg=darkred guifg=white
+":hi CursorColumn cterm=NONE ctermbg=darkred ctermfg=white guibg=darkred guifg=white
+":hi CursorLine      cterm=underline ctermbg=none guibg=GhostWhite 
+":hi CursorColumn    cterm=bold      ctermbg=none guibg=GhostWhite
+
 
 " tab width = 4, use spaces!
 set expandtab
@@ -35,19 +59,62 @@ set nocin
 set wrap!
 
 
-
+" http://www.cs.swarthmore.edu/help/vim/vim7.html
+if has("spell")
+""  set spell
+  map <F5> :set spell!<CR><Bar>:echo "Spell Check: " . strpart("OffOn", 3 * &spell, 3)<CR>
+  highlight SpellBad ctermfg=black ctermbg=white guibg=darkgrey guifg=white cterm=bold
+  highlight SpellCap ctermfg=darkred ctermbg=white guibg=darkred guifg=white cterm=bold
+  highlight PmenuSel ctermfg=black ctermbg=white guibg=black guifg=white cterm=bold
+  mkspell!  ~/.vim/spell/en.utf-8.add
+endif
 " """""""""""""""""""""""""""""""""""""""""""""""
 " """""""""""""""""""""""""""""""""""""""""""""""
 " GUI MODE ONLY
 if has('gui_running')
 
   " Set the window height and width
-  set lines=35
-  set columns=130
+  set lines=65
+  set columns=200
 
   " always show the tab bar
   set showtabline=2
 
+  " show up to 50 tabs
+  "set tabpagemax=50
+
+  " show up to 100 tabs
+  set tabpagemax=100
+  
+  function! GuiTabLabel()
+    " buffer_number[+] buffer_name [(number_windows)]
+
+    " Add buffer number
+    let label = v:lnum
+
+    " Add '+' if one of the buffers in the tab page is modified
+    let bufnrlist = tabpagebuflist(v:lnum)
+    for bufnr in bufnrlist
+        if getbufvar(bufnr, "&modified")
+        let label .= '+'
+        break
+        endif
+    endfor
+
+    " Append the buffer name
+    let label .= ' ' . bufname(bufnrlist[tabpagewinnr(v:lnum) - 1])
+
+    " Append the number of windows in the tab page if more than one
+    let wincount = tabpagewinnr(v:lnum, '$')
+    if wincount > 1
+        let label .= ' (' . wincount . ')'
+    endif
+
+    return label
+  endfunction
+
+set guitablabel=%{GuiTabLabel()}
+  
   " turn on the syntax menu
   let do_syntax_sel_menu = 1|runtime! synmenu.vim|aunmenu &Syntax.&Show\ filetypes\ in\ menu
   
@@ -55,25 +122,39 @@ if has('gui_running')
   set guioptions+=b
 
   " https://github.com/scrooloose/nerdtree
-  autocmd vimenter * NERDTree
+  "autocmd vimenter * NERDTree
   
   " http://www.troubleshooters.com/linux/vifont.htm
-  set guifont=Droid\ Sans\ Mono\ 8
+  set guifont=Droid\ Sans\ Mono\ 13
 
 endif
 " """""""""""""""""""""""""""""""""""""""""""""""
 " """""""""""""""""""""""""""""""""""""""""""""""
+" http://stackoverflow.com/questions/8356195/vimrc-different-colorscheme-when-file-is-read-only
+function CheckRo()
+    if &readonly
+        colorscheme desert
+    endif
+endfunction
+au BufReadPost * call CheckRo()
+" """""""""""""""""""""""""""""""""""""""""""""""
+" """""""""""""""""""""""""""""""""""""""""""""""
+
+
 
 
 " be explicit about the map leader (the default is fine)
 " let mapleader = "\"
 
 
+
+
+
 " """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Settings from "Configuring Vim right" (http://items.sjbach.com/319/configuring-vim-right)
 
 " turn off the bell
-set visualbell
+"set visualbell
 
 " Intuitive backspacing in insert mode
 set backspace=indent,eol,start
@@ -107,13 +188,14 @@ let g:showmarks_include='0123456789ABCDEFGHJKLMNPQRSTUVWXYabcdefghjklmnpqrstuvwx
 
 
 " filetypes
-syntax on
-filetype on
-filetype plugin on
+"syntax on
+"filetype on
+filetype plugin indent on
+syntax enable
 
 " the default setting makes me batty!
-" filetype indent on
-filetype indent off
+"filetype indent on
+"filetype indent off
 
 "https://github.com/scrooloose/nerdcommenter
 "autocmd vimenter * NERDCommenter
@@ -123,6 +205,60 @@ filetype indent off
 " http://vim.wikia.com/wiki/Disable_automatic_comment_insertion
 setlocal formatoptions+=c formatoptions+=r formatoptions+=o
 
+" """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Folding
+" http://vim.wikia.com/wiki/Folding
+
+"   MANUAL FOLDING
+"   Normally it is best to use an automatic folding method, but manual 
+"   folding is simple and useful for dealing with small folds. It is 
+"   easy to fold an arbitrary block from visual mode by pressing:
+"       'v{motion}zf'. 
+"   Alternatively, this can be used in normal mode, after zf'a for 
+"   example will fold from the current line to wherever the mark a has been 
+"   set, or zf3j will fold the next 3 lines. This allows you to see the 
+"   section you've selected before you fold it. 
+"
+"   If you just want to enter a few folds in a program that uses braces 
+"   around blocks ({...}), you can use the command
+"       'va}zf' 
+"   to create a fold for the block containing the cursor. i
+"
+"   Use zd to delete a fold (no text is deleted; the fold at the 
+"   cursor is removed). 
+"   A quicker way to create a block is with 
+"       'zf{motion}'
+"   so the example fold mentioned earlier could also be typed 
+"       'zfa}'
+"
+" INDENT FOLDING WITH MANUAL FOLDS
+" If you like the convenience of having Vim define folds automatically by indent level, 
+" -- but would also like to create folds manually, you can get both by putting 
+"  this in your vimrc:
+"augroup vimrc
+"  au BufReadPre * setlocal foldmethod=indent
+"  au BufWinEnter * if &fdm == 'indent' | setlocal foldmethod=manual | endif
+"augroup END
+
+" Key maps to show/hide folds
+inoremap <F9> <C-O>za
+nnoremap <F9> za
+onoremap <F9> <C-C>za
+vnoremap <F9> zf
+
+set viewoptions=cursor,folds,slash,unix 
+let g:skipview_files = ['*\.vim']
+
+" http://vim.wikia.com/wiki/Vim_as_XML_Editor
+" To set up syntax folding automatically for XML files put the 
+" following lines in your .vimrc
+let g:xml_syntax_folding=1
+au FileType xml setlocal foldmethod=syntax
+au FileType xsd setlocal foldmethod=syntax
+"let php_folding=1
+"let php_phpdoc_folding=1
+"au FileType php source ~/.vim/bundle/php.vim/syntax/php.vim
+"au FileType php setlocal foldmethod=syntax
 
 " """"""""""""""""""""""""""""""""""""""""""""""""""
 " MACROS
@@ -266,8 +402,13 @@ inoremap <C-space> <c-r>=InsertTabWrapper()<cr>
 
 " http://ubuntuforums.org/showthread.php?t=1212765
 if has("autocmd")
-  filetype plugin on
+  filetype plugin indent on
 endif
 
+" Manage your 'runtimepath' with ease. In practical terms, pathogen.vim makes
+" it super easy to install plugins and runtime files in their own private
+" directories.
+" - https://github.com/tpope/vim-pathogen
+execute pathogen#infect()
 
 " ~/.vimrc ends here
